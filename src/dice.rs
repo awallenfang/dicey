@@ -1,4 +1,5 @@
 use rand::Rng;
+use std::fmt;
 
 pub struct Dice {
     eyes: u16,
@@ -68,6 +69,18 @@ impl Dice {
     }
 }
 
+impl fmt::Display for Dice {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let base = format!("{}d{}", self.count, self.eyes);
+        let added = match self.add {
+            0 => String::from(""),
+            1_i32..=i32::MAX => format!("+{}", self.add),
+            i32::MIN..=-1_i32 => format!("{}", self.add),
+        };
+        write! {f, "{}{}", base, added}
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::dice::Dice;
@@ -116,5 +129,20 @@ mod tests {
         let d6_minus_10 = Dice::new_subbed(6, 10).unwrap();
         let num = d6_minus_10.roll();
         assert_eq!(&num, &1_i32);
+    }
+
+    #[test]
+    fn display() {
+        let d20 = Dice::new(20).unwrap();
+        assert_eq!(d20.to_string(), "1d20");
+
+        let d20_plus_1 = Dice::new_added(20, 1).unwrap();
+        assert_eq!(d20_plus_1.to_string(), "1d20+1");
+
+        let five_d20_plus_69 = Dice::new_full(20, 5, 69).unwrap();
+        assert_eq!(five_d20_plus_69.to_string(), "5d20+69");
+
+        let five_d20_minus_69 = Dice::new_full(20, 5, -69).unwrap();
+        assert_eq!(five_d20_minus_69.to_string(), "5d20-69");
     }
 }
