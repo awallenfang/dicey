@@ -1,13 +1,13 @@
+mod die;
+
+use crate::errors::{StructureError, ParsingError};
+use die::Die;
 use lazy_static::lazy_static;
-use rand::Rng;
 use regex::Regex;
-use std::cmp::Ordering;
 use std::fmt;
-use std::num::ParseIntError;
 use std::str::FromStr;
 
 lazy_static! {
-    //FIND_DICE is currently not used
     //TODO: Find a regex way to find the dice strings, instead of just looking for ds
     static ref FIND_DICE: Regex = Regex::new(r"(?ix)\d*d").expect("Failed parsing FIND_DIE");
     static ref DICE_CONTENT: Regex = Regex::new(r"(?ix)(?P<pre>[+-])?
@@ -17,116 +17,85 @@ lazy_static! {
     (?P<add>[+-]\d*)?").expect("Failed parsing DICE_CONTENT");
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq)]
 pub struct Dice {
-    eyes: u16,
-    count: u16,
-    add: i32,
-    neg: bool,
+    dice: Vec<Die>,
 }
 
 impl Dice {
-    pub fn new(eyes: u16) -> Result<Dice, &'static str> {
+    pub fn new(eyes: u16) -> Result<Dice, StructureError> {
         if eyes == 0 {
-            return Err("Invalid Eye Count");
+            return Err(StructureError::ZeroEyes);
         }
         Ok(Dice {
-            eyes,
-            count: 1,
-            add: 0,
-            neg: false,
+            dice: vec![Die::new(eyes)],
         })
     }
-    pub fn new_counted(eyes: u16, count: u16) -> Result<Dice, &'static str> {
+    pub fn new_counted(eyes: u16, count: u16) -> Result<Dice, StructureError> {
         if eyes == 0 {
-            return Err("Invalid Eye Count");
+            return Err(StructureError::ZeroEyes);
         }
         if count == 0 {
-            return Err("Invalid Dice Count");
+            return Err(StructureError::ZeroCount);
         }
         Ok(Dice {
-            eyes,
-            count,
-            add: 0,
-            neg: false,
+            dice: vec![Die::new_counted(eyes, count)],
         })
     }
-    pub fn new_added(eyes: u16, add: i32) -> Result<Dice, &'static str> {
+    pub fn new_added(eyes: u16, add: i32) -> Result<Dice, StructureError> {
         if eyes == 0 {
-            return Err("Invalid Eye Count");
+            return Err(StructureError::ZeroEyes);
         }
         Ok(Dice {
-            eyes,
-            count: 1,
-            add,
-            neg: false,
+            dice: vec![Die::new_added(eyes, add)],
         })
     }
-    pub fn new_subbed(eyes: u16, sub: i32) -> Result<Dice, &'static str> {
+    pub fn new_subbed(eyes: u16, sub: i32) -> Result<Dice, StructureError> {
         if eyes == 0 {
-            return Err("Invalid Eye Count");
+            return Err(StructureError::ZeroEyes);
         }
         Ok(Dice {
-            eyes,
-            count: 1,
-            add: -sub,
-            neg: false,
+            dice: vec![Die::new_subbed(eyes, sub)],
         })
     }
-    pub fn new_full(eyes: u16, count: u16, add: i32) -> Result<Dice, &'static str> {
+    pub fn new_full(eyes: u16, count: u16, add: i32) -> Result<Dice, StructureError> {
         if eyes == 0 {
-            return Err("Invalid Eye Count");
+            return Err(StructureError::ZeroEyes);
         }
         if count == 0 {
-            return Err("Invalid Dice Count");
+            return Err(StructureError::ZeroCount);
         }
         Ok(Dice {
-            eyes,
-            count,
-            add,
-            neg: false,
+            dice: vec![Die::new_full(eyes, count, add)],
         })
     }
-    fn new_internal(eyes: u16, count: u16, add: i32, neg: bool) -> Result<Dice, &'static str> {
+    fn new_internal(eyes: u16, count: u16, add: i32, neg: bool) -> Result<Dice, StructureError> {
         if eyes == 0 {
-            return Err("Invalid Eye Count");
+            return Err(StructureError::ZeroEyes);
         }
         if count == 0 {
-            return Err("Invalid Dice Count");
+            return Err(StructureError::ZeroCount);
         }
         Ok(Dice {
-            eyes,
-            count,
-            add,
-            neg,
+            dice: vec![Die::new_internal(eyes, count, add, neg)],
         })
     }
     pub fn roll(&self) -> i32 {
-        let mut rng = rand::thread_rng();
-        match (self.count * rng.gen_range(1..=self.eyes)) as i32 + self.add {
+        match self.dice.iter().map(|d| d.roll()).sum() {
             num if num <= 0 => 1,
             num => num,
         }
-    }
-    fn roll_with_prefix(&self) -> i32 {
-        unimplemented!("The roll to be used with DiceSets when several dice are calculated together")
     }
 }
 
 impl fmt::Display for Dice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let base = format!("{}d{}", self.count, self.eyes);
-        let added = match self.add.cmp(&0) {
-            Ordering::Equal => String::from(""),
-            Ordering::Greater => format!("+{}", self.add),
-            Ordering::Less => format!("{}", self.add),
-        };
-        write! {f, "{}{}", base, added}
+        write! {f, "{}", self.dice.iter().map(|d| d.to_string()).fold(String::new(), |d1, d2| d1 + &d2)}
     }
 }
 
 impl FromStr for Dice {
-    type Err = ParseIntError;
+    type Err = ParsingError;
 
     fn from_str(s: &str) -> Result<Dice, Self::Err> {
         //TODO: Dice positions
