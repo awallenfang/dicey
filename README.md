@@ -24,9 +24,11 @@ fn main() {
 - [x] Errors for failed parsing
 - [ ] (Exploding die)
 - [ ] (Dropping die)
-- [ ] Parsing single die into Dice
-- [ ] Parsing multiple dice into Dice
-
+- [x] Parsing single die into Dice
+- [x] Parsing multiple dice into Dice
+- [ ] Refactor dice slicing
+- [ ] Find die strings directly instead of searching for d-s
+ 
 ### Feature Plans
 - [ ] Configurable dice notation syntax
 - [ ] Support for math outside of the die

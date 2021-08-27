@@ -2,7 +2,7 @@ use rand::Rng;
 use std::cmp::Ordering;
 use std::fmt;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub(crate) struct Die {
     eyes: u16,
     count: u16,
@@ -107,14 +107,7 @@ fn basic_added_die() {
 fn basic_subbed_die() {
     let d20_minus_5 = Die::new_subbed(20, 5);
     let num = d20_minus_5.roll();
-    assert!((1..=15).contains(&num));
-}
-
-#[test]
-fn negative_roll() {
-    let d6_minus_10 = Die::new_subbed(6, 10);
-    let num = d6_minus_10.roll();
-    assert_eq!(&num, &1_i32);
+    assert!((-4..=15).contains(&num));
 }
 
 #[test]

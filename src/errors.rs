@@ -7,7 +7,7 @@ pub enum ParsingError {
 impl fmt::Display for ParsingError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ParsingError::WrongFormat => write!(f, "The dice format is not correct.")
+            ParsingError::WrongFormat => write!(f, "The dice format is not correct."),
         }
     }
 }
@@ -15,7 +15,7 @@ impl fmt::Display for ParsingError {
 #[derive(Debug, Clone)]
 pub enum StructureError {
     ZeroEyes,
-    ZeroCount
+    ZeroCount,
 }
 
 impl fmt::Display for StructureError {

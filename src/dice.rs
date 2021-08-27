@@ -1,9 +1,10 @@
 mod die;
 
-use crate::errors::{StructureError, ParsingError};
+use crate::errors::{ParsingError, StructureError};
 use die::Die;
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::cmp::min;
 use std::fmt;
 use std::str::FromStr;
 
@@ -69,17 +70,6 @@ impl Dice {
             dice: vec![Die::new_full(eyes, count, add)],
         })
     }
-    fn new_internal(eyes: u16, count: u16, add: i32, neg: bool) -> Result<Dice, StructureError> {
-        if eyes == 0 {
-            return Err(StructureError::ZeroEyes);
-        }
-        if count == 0 {
-            return Err(StructureError::ZeroCount);
-        }
-        Ok(Dice {
-            dice: vec![Die::new_internal(eyes, count, add, neg)],
-        })
-    }
     pub fn roll(&self) -> i32 {
         match self.dice.iter().map(|d| d.roll()).sum() {
             num if num <= 0 => 1,
@@ -98,10 +88,71 @@ impl FromStr for Dice {
     type Err = ParsingError;
 
     fn from_str(s: &str) -> Result<Dice, Self::Err> {
-        //TODO: Dice positions
-        //TODO: String slices with just the dice
-        //TODO: Prefix
-        unimplemented!("Implement dice parsing");
+        //TODO: Definitely refactor
+        let mut dice_strings: Vec<&str> = vec![];
+        let dice_iter = FIND_DICE.find_iter(s);
+
+        let mut unsliced_string = s;
+        for (i, position) in dice_iter.enumerate() {
+            if i == 0 {
+                continue;
+            }
+            let (chunk, rest) =
+                unsliced_string.split_at(min(unsliced_string.len(), position.start() - 1));
+            dice_strings.push(chunk);
+            unsliced_string = rest;
+        }
+        dice_strings.push(unsliced_string);
+
+        let mut dice: Vec<Die> = vec![];
+
+        for die in dice_strings {
+            //Throws the WrongFormat Error if no capture is found
+            let cap = match DICE_CONTENT.captures(die) {
+                Some(c) => c,
+                None => return Err(ParsingError::WrongFormat),
+            };
+
+            let neg = match cap.name("pre") {
+                Some(c) => match c.as_str() {
+                    "+" => false,
+                    "-" => true,
+                    _ => false,
+                },
+                None => false,
+            };
+
+            let count = match cap.name("count") {
+                Some(c) => match c.as_str().parse::<u16>() {
+                    Ok(n) => n,
+                    Err(_) => 1_u16,
+                },
+                None => 1_u16,
+            };
+
+            let eyes = match cap.name("eyes") {
+                Some(c) => match c.as_str() {
+                    "%" => 100_u16,
+                    c => match c.parse::<u16>() {
+                        Ok(n) => n,
+                        Err(_) => 20_u16,
+                    },
+                },
+                None => 20_u16,
+            };
+
+            let add = match cap.name("add") {
+                Some(c) => match c.as_str().parse::<i32>() {
+                    Ok(n) => n,
+                    Err(_) => 0,
+                },
+                None => 0,
+            };
+
+            dice.push(Die::new_internal(eyes, count, add, neg));
+        }
+
+        Ok(Dice { dice })
     }
 }
 
