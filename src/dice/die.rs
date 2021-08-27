@@ -77,7 +77,7 @@ impl fmt::Display for Die {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let pre = match self.neg {
             true => "-",
-            false => "+"
+            false => "+",
         };
         let base = format!("{}d{}", self.count, self.eyes);
         let added = match self.add.cmp(&0) {

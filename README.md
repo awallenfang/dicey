@@ -29,6 +29,7 @@ fn main() {
 - [ ] Refactor dice slicing
 - [ ] Find die strings directly instead of searching for d-s
 - [ ] Have roll() return a Roll struct to access the individual dice for output
+- [x] Ignore/Remove whitespace when parsing
  
 ### Feature Plans
 - [ ] Configurable dice notation syntax

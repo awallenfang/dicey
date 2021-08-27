@@ -80,9 +80,11 @@ impl Dice {
 
 impl fmt::Display for Dice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let dice_string = self.dice.iter()
-                                    .map(|d| d.to_string())
-                                    .fold(String::new(), |d1, d2| d1 + &d2);
+        let dice_string = self
+            .dice
+            .iter()
+            .map(|d| d.to_string())
+            .fold(String::new(), |d1, d2| d1 + &d2);
 
         //Remove first char
         let mut dice_string = dice_string.chars();
@@ -96,11 +98,14 @@ impl FromStr for Dice {
     type Err = ParsingError;
 
     fn from_str(s: &str) -> Result<Dice, Self::Err> {
+        // Remove whitespace and copy the string
+        let removed_whitespace = s.replace(" ", "");
+        let mut unsliced_string = removed_whitespace.as_str();
+
         //TODO: Definitely refactor
         let mut dice_strings: Vec<&str> = vec![];
-        let dice_iter = FIND_DICE.find_iter(s);
+        let dice_iter = FIND_DICE.find_iter(unsliced_string);
 
-        let mut unsliced_string = s;
         // The offset is needed, since the position to split at changes when we remove chunks.
         // So this is the total length of removed chunks
         let mut offset = 0;
@@ -108,9 +113,9 @@ impl FromStr for Dice {
             if i == 0 {
                 continue;
             }
-            let (chunk, rest) =
-                unsliced_string.split_at(position.start() - 1 - offset);
+            let (chunk, rest) = unsliced_string.split_at(position.start() - 1 - offset);
             dice_strings.push(chunk);
+
             offset += chunk.len();
             unsliced_string = rest;
         }
@@ -125,7 +130,7 @@ impl FromStr for Dice {
                 Some(c) => c,
                 None => return Err(ParsingError::WrongFormat),
             };
-            
+
             //If it is not found, default to false
             let neg = match cap.name("pre") {
                 Some(c) => match c.as_str() {
