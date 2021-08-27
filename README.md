@@ -28,6 +28,7 @@ fn main() {
 - [x] Parsing multiple dice into Dice
 - [ ] Refactor dice slicing
 - [ ] Find die strings directly instead of searching for d-s
+- [ ] Have roll() return a Roll struct to access the individual dice for output
  
 ### Feature Plans
 - [ ] Configurable dice notation syntax

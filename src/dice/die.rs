@@ -61,7 +61,10 @@ impl Die {
     }
     pub(crate) fn roll(&self) -> i32 {
         let mut rng = rand::thread_rng();
-        let res = (self.count * rng.gen_range(1..=self.eyes)) as i32 + self.add;
+        let res = match (self.count * rng.gen_range(1..=self.eyes)) as i32 + self.add {
+            num if num <= 0 => 1,
+            num => num,
+        };
         if self.neg {
             -res
         } else {
@@ -72,13 +75,17 @@ impl Die {
 
 impl fmt::Display for Die {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let pre = match self.neg {
+            true => "-",
+            false => "+"
+        };
         let base = format!("{}d{}", self.count, self.eyes);
         let added = match self.add.cmp(&0) {
             Ordering::Equal => String::from(""),
             Ordering::Greater => format!("+{}", self.add),
             Ordering::Less => format!("{}", self.add),
         };
-        write! {f, "{}{}", base, added}
+        write! {f, "{}{}{}", pre, base, added}
     }
 }
 
@@ -113,14 +120,14 @@ fn basic_subbed_die() {
 #[test]
 fn display() {
     let d20 = Die::new(20);
-    assert_eq!(d20.to_string(), "1d20");
+    assert_eq!(d20.to_string(), "+1d20");
 
     let d20_plus_1 = Die::new_added(20, 1);
-    assert_eq!(d20_plus_1.to_string(), "1d20+1");
+    assert_eq!(d20_plus_1.to_string(), "+1d20+1");
 
     let five_d20_plus_69 = Die::new_full(20, 5, 69);
-    assert_eq!(five_d20_plus_69.to_string(), "5d20+69");
+    assert_eq!(five_d20_plus_69.to_string(), "+5d20+69");
 
     let five_d20_minus_69 = Die::new_full(20, 5, -69);
-    assert_eq!(five_d20_minus_69.to_string(), "5d20-69");
+    assert_eq!(five_d20_minus_69.to_string(), "+5d20-69");
 }

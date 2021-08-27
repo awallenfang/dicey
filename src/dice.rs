@@ -80,7 +80,15 @@ impl Dice {
 
 impl fmt::Display for Dice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write! {f, "{}", self.dice.iter().map(|d| d.to_string()).fold(String::new(), |d1, d2| d1 + &d2)}
+        let dice_string = self.dice.iter()
+                                    .map(|d| d.to_string())
+                                    .fold(String::new(), |d1, d2| d1 + &d2);
+
+        //Remove first char
+        let mut dice_string = dice_string.chars();
+        dice_string.next();
+        let dice_string = dice_string.as_str();
+        write! {f, "{}", dice_string}
     }
 }
 
@@ -93,16 +101,21 @@ impl FromStr for Dice {
         let dice_iter = FIND_DICE.find_iter(s);
 
         let mut unsliced_string = s;
+        // The offset is needed, since the position to split at changes when we remove chunks.
+        // So this is the total length of removed chunks
+        let mut offset = 0;
         for (i, position) in dice_iter.enumerate() {
             if i == 0 {
                 continue;
             }
             let (chunk, rest) =
-                unsliced_string.split_at(min(unsliced_string.len(), position.start() - 1));
+                unsliced_string.split_at(position.start() - 1 - offset);
             dice_strings.push(chunk);
+            offset += chunk.len();
             unsliced_string = rest;
         }
         dice_strings.push(unsliced_string);
+        println!("{:?}", dice_strings);
 
         let mut dice: Vec<Die> = vec![];
 
@@ -112,7 +125,8 @@ impl FromStr for Dice {
                 Some(c) => c,
                 None => return Err(ParsingError::WrongFormat),
             };
-
+            
+            //If it is not found, default to false
             let neg = match cap.name("pre") {
                 Some(c) => match c.as_str() {
                     "+" => false,
@@ -122,6 +136,7 @@ impl FromStr for Dice {
                 None => false,
             };
 
+            // If it is not found, or if the number parsing fails, default to 1
             let count = match cap.name("count") {
                 Some(c) => match c.as_str().parse::<u16>() {
                     Ok(n) => n,
@@ -130,6 +145,7 @@ impl FromStr for Dice {
                 None => 1_u16,
             };
 
+            // If it is not found, or if the number parsing fails, default to 20
             let eyes = match cap.name("eyes") {
                 Some(c) => match c.as_str() {
                     "%" => 100_u16,
@@ -141,6 +157,7 @@ impl FromStr for Dice {
                 None => 20_u16,
             };
 
+            // If it is not found, or if the number parsing fails, default to 20
             let add = match cap.name("add") {
                 Some(c) => match c.as_str().parse::<i32>() {
                     Ok(n) => n,
