@@ -3,7 +3,7 @@ name = "dicer"
 version = "0.2.0"
 edition = "2018"
 authors = ["Marvin Wallenfang"]
-description = "A calculator for dice rolls. Primarily made for tabletop dice rolls."
+description = "A calculator for dice rolls. Primarily made for tabletop RPG dice rolls."
 keywords = ["parser","parse","game","gamedev","random","dice"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

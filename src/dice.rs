@@ -1,9 +1,11 @@
 mod die;
+pub mod roll;
 
 use crate::errors::{ParsingError, StructureError};
 use die::Die;
 use lazy_static::lazy_static;
 use regex::Regex;
+use roll::Roll;
 use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
@@ -18,7 +20,7 @@ lazy_static! {
     (?P<add>[+-]\d*)?").expect("Failed parsing DICE_CONTENT");
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Dice {
     dice: Vec<Die>,
 }
@@ -70,12 +72,18 @@ impl Dice {
             dice: vec![Die::new_full(eyes, count, add)],
         })
     }
-    pub fn roll(&self) -> i32 {
+    pub fn roll(&self) -> Roll {
         // Iterate over all the die, roll them and take their value.
         // Take the sum of all the values
-        match self.dice.iter().map(|d| d.roll()).sum() {
+        let rolls: Vec<i32> = self.dice.iter().map(|d| d.roll()).collect();
+        let result = match rolls.iter().sum() {
             num if num <= 0 => 1,
             num => num,
+        } as u16;
+        Roll {
+            dice: self.clone(),
+            dice_rolls: rolls,
+            result,
         }
     }
 }
@@ -182,7 +190,7 @@ impl FromStr for Dice {
 #[test]
 fn basic_dice() {
     let d6 = Dice::new(6).unwrap();
-    let num = d6.roll();
+    let num = d6.roll().result;
     assert!((1..=6).contains(&num));
 }
 
@@ -195,7 +203,7 @@ fn invalid_eyes() {
 #[test]
 fn basic_counted_dice() {
     let d6 = Dice::new_counted(6, 1).unwrap();
-    let num = d6.roll();
+    let num = d6.roll().result;
     assert!((1..=6).contains(&num));
 }
 
@@ -208,22 +216,22 @@ fn invalid_count() {
 #[test]
 fn basic_added_dice() {
     let d20_plus_69 = Dice::new_added(20, 69).unwrap();
-    let num = d20_plus_69.roll();
+    let num = d20_plus_69.roll().result;
     assert!((21..=89).contains(&num));
 }
 
 #[test]
 fn basic_subbed_dice() {
     let d20_minus_5 = Dice::new_subbed(20, 5).unwrap();
-    let num = d20_minus_5.roll();
+    let num = d20_minus_5.roll().result;
     assert!((1..=15).contains(&num));
 }
 
 #[test]
 fn negative_roll() {
     let d6_minus_10 = Dice::new_subbed(6, 10).unwrap();
-    let num = d6_minus_10.roll();
-    assert_eq!(&num, &1_i32);
+    let num = d6_minus_10.roll().result;
+    assert_eq!(&num, &1_u16);
 }
 
 #[test]

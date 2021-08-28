@@ -121,7 +121,7 @@ fn basic_subbed_die() {
 fn negated_die() {
     let minus_d20 = Die::new_internal(20, 1, 0, true);
     let num = minus_d20.roll();
-    assert!((-20..-1).contains(&num));
+    assert!((-20..=-1).contains(&num));
 }
 
 #[test]
