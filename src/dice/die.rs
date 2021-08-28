@@ -118,6 +118,13 @@ fn basic_subbed_die() {
 }
 
 #[test]
+fn negated_die() {
+    let minus_d20 = Die::new_internal(20, 1, 0, true);
+    let num = minus_d20.roll();
+    assert!((-20..-1).contains(&num));
+}
+
+#[test]
 fn display() {
     let d20 = Die::new(20);
     assert_eq!(d20.to_string(), "+1d20");
@@ -130,4 +137,7 @@ fn display() {
 
     let five_d20_minus_69 = Die::new_full(20, 5, -69);
     assert_eq!(five_d20_minus_69.to_string(), "+5d20-69");
+
+    let minus_d20 = Die::new_internal(20, 1, 0, true);
+    assert_eq!(minus_d20.to_string(), "-1d20");
 }

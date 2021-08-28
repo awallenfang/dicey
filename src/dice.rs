@@ -4,7 +4,7 @@ use crate::errors::{ParsingError, StructureError};
 use die::Die;
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::cmp::min;
+use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
 
@@ -18,7 +18,7 @@ lazy_static! {
     (?P<add>[+-]\d*)?").expect("Failed parsing DICE_CONTENT");
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct Dice {
     dice: Vec<Die>,
 }
@@ -71,6 +71,8 @@ impl Dice {
         })
     }
     pub fn roll(&self) -> i32 {
+        // Iterate over all the die, roll them and take their value.
+        // Take the sum of all the values
         match self.dice.iter().map(|d| d.roll()).sum() {
             num if num <= 0 => 1,
             num => num,
@@ -80,22 +82,24 @@ impl Dice {
 
 impl fmt::Display for Dice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // String together all the strings of the die
         let dice_string = self
             .dice
             .iter()
             .map(|d| d.to_string())
             .fold(String::new(), |d1, d2| d1 + &d2);
 
-        //Remove first char
+        // Skip first char, as that is a leading + we do not want
         let mut dice_string = dice_string.chars();
         dice_string.next();
         let dice_string = dice_string.as_str();
+
         write! {f, "{}", dice_string}
     }
 }
 
 impl FromStr for Dice {
-    type Err = ParsingError;
+    type Err = Box<dyn Error>;
 
     fn from_str(s: &str) -> Result<Dice, Self::Err> {
         // Remove whitespace and copy the string
@@ -104,12 +108,11 @@ impl FromStr for Dice {
 
         //TODO: Definitely refactor
         let mut dice_strings: Vec<&str> = vec![];
-        let dice_iter = FIND_DICE.find_iter(unsliced_string);
 
         // The offset is needed, since the position to split at changes when we remove chunks.
         // So this is the total length of removed chunks
         let mut offset = 0;
-        for (i, position) in dice_iter.enumerate() {
+        for (i, position) in FIND_DICE.find_iter(unsliced_string).enumerate() {
             if i == 0 {
                 continue;
             }
@@ -128,7 +131,7 @@ impl FromStr for Dice {
             //Throws the WrongFormat Error if no capture is found
             let cap = match DICE_CONTENT.captures(die) {
                 Some(c) => c,
-                None => return Err(ParsingError::WrongFormat),
+                None => return Err(ParsingError::WrongFormat.into()),
             };
 
             //If it is not found, default to false
@@ -141,35 +144,33 @@ impl FromStr for Dice {
                 None => false,
             };
 
-            // If it is not found, or if the number parsing fails, default to 1
+            // If it is not found or if the parsing fails, default to 1.
             let count = match cap.name("count") {
-                Some(c) => match c.as_str().parse::<u16>() {
-                    Ok(n) => n,
-                    Err(_) => 1_u16,
-                },
+                Some(c) => c.as_str().parse::<u16>().unwrap_or(1_u16),
                 None => 1_u16,
             };
 
-            // If it is not found, or if the number parsing fails, default to 20
+            // If it is not found or if the parsing fails, default to 6.
             let eyes = match cap.name("eyes") {
                 Some(c) => match c.as_str() {
                     "%" => 100_u16,
-                    c => match c.parse::<u16>() {
-                        Ok(n) => n,
-                        Err(_) => 20_u16,
-                    },
+                    c => c.parse::<u16>().unwrap_or(6_u16),
                 },
-                None => 20_u16,
+                None => 6_u16,
             };
 
-            // If it is not found, or if the number parsing fails, default to 20
+            // If it is not found or if the parsing fails, default to 0.
             let add = match cap.name("add") {
-                Some(c) => match c.as_str().parse::<i32>() {
-                    Ok(n) => n,
-                    Err(_) => 0,
-                },
+                Some(c) => c.as_str().parse::<i32>().unwrap_or(0),
                 None => 0,
             };
+
+            if count == 0 {
+                return Err(StructureError::ZeroCount.into());
+            }
+            if eyes == 0 {
+                return Err(StructureError::ZeroEyes.into());
+            }
 
             dice.push(Die::new_internal(eyes, count, add, neg));
         }
@@ -286,4 +287,28 @@ fn regex_dice_content() {
     assert_eq!(caps4.name("eyes").unwrap().as_str(), "%");
     assert!(caps4.name("add").is_none());
     assert!(caps4.name("pre").is_none());
+}
+
+#[test]
+fn dice_parsing() {
+    let d20 = "1d20".parse::<Dice>().unwrap();
+    assert_eq!(d20, Dice::new(20).unwrap());
+
+    let d100 = "d%".parse::<Dice>().unwrap();
+    assert_eq!(d100, Dice::new(100).unwrap());
+
+    let dd100 = "dd100".parse::<Dice>();
+    assert!(dd100.is_err());
+
+    let six_d20_minus_1d4_parse = "6d20 - 1d4".parse::<Dice>().unwrap();
+    let six_d20_minus_1d4_built = Dice {
+        dice: vec![Die::new_counted(20, 6), Die::new_internal(4, 1, 0, true)],
+    };
+    assert_eq!(six_d20_minus_1d4_built, six_d20_minus_1d4_parse);
+
+    let d0 = "1d0".parse::<Dice>();
+    assert!(d0.is_err());
+
+    let zero_d60 = "0d60".parse::<Dice>();
+    assert!(zero_d60.is_err());
 }

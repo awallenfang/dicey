@@ -20,17 +20,14 @@ fn main() {
 ```
 
 ### TODO
-- [x] Errors for failed die
-- [x] Errors for failed parsing
-- [ ] (Exploding die)
-- [ ] (Dropping die)
-- [x] Parsing single die into Dice
-- [x] Parsing multiple dice into Dice
+- [ ] Have roll() return a Roll struct to access the individual dice for output
+- [ ] Dropping die
 - [ ] Refactor dice slicing
 - [ ] Find die strings directly instead of searching for d-s
-- [ ] Have roll() return a Roll struct to access the individual dice for output
-- [x] Ignore/Remove whitespace when parsing
+- [ ] (Exploding die)
+- [ ] Find a better name (dicey?)
  
 ### Feature Plans
 - [ ] Configurable dice notation syntax
 - [ ] Support for math outside of the die
+- [ ] (Rework parsing using Shunting-Yard algorithm)?
