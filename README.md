@@ -1,4 +1,4 @@
-# Dicey (name pending)
+# Dicey
 
 Dicey is a Rust crate designed specifically for Tabletop RPG dice rolls and parsing such dice notation strings.
 
