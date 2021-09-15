@@ -20,10 +20,10 @@ fn main() {
 ```
 
 ### TODO
-- [x] Have roll() return a Roll struct to access the individual dice for output
-- [ ] Dropping die
+- [ ] Dropping die  (dl, dh)
+- [ ] Keeping die   (kl, kh)
 - [ ] Refactor dice slicing
-- [ ] Find die strings directly instead of searching for d-s
+- [ ] Find die strings directly instead of searching for d-s -> Possibly allows Shunting yard
 - [ ] (Exploding die)
 - [ ] Find a better name (dicey?)
  
