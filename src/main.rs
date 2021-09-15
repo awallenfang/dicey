@@ -1,4 +1,4 @@
-use dicer::Dice;
+use dicey::Dice;
 
 fn main() {
     println!("{}", "2d6 +4 +3d20".parse::<Dice>().unwrap());

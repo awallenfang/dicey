@@ -1,6 +1,6 @@
-# Dicer (name pending)
+# Dicey (name pending)
 
-Dicer is a Rust crate designed specifically for Tabletop RPG dice rolls and parsing such dice notation strings.
+Dicey is a Rust crate designed specifically for Tabletop RPG dice rolls and parsing such dice notation strings.
 
 It supports configurable dice notations and the stringing of dice in the form of `1d6 + 2d4`.
 
@@ -25,7 +25,6 @@ fn main() {
 - [ ] Refactor dice slicing
 - [ ] Find die strings directly instead of searching for d-s -> Possibly allows Shunting yard
 - [ ] (Exploding die)
-- [ ] Find a better name (dicey?)
  
 ### Feature Plans
 - [ ] Configurable dice notation syntax
